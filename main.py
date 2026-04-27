@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os
+import sys
 import docker
 import requests
 import subprocess
@@ -6,12 +8,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = docker.from_env()
-label_filter = {"label": ["tailscale.name"]}
+# Validate environment
+REQUIRED_ENV = ["TAILNET_ID", "DEVICE_ID", "TS_KEY"]
+missing = [e for e in REQUIRED_ENV if not os.getenv(e)]
+if missing:
+    print(f"ERROR: Missing environment variables: {missing}")
+    sys.exit(1)
 
 tailnet = os.getenv("TAILNET_ID")
 device_id = os.getenv("DEVICE_ID")
 key = os.getenv("TS_KEY")
+
+client = docker.from_env()
 
 def run_tailscale(container, stop=False):
     svc = container.labels.get("tailscale.name")
@@ -24,20 +32,28 @@ def run_tailscale(container, stop=False):
         "ports": ["tcp:443"],
     }
 
-    response = requests.put(
-        f"https://api.tailscale.com/api/v2/tailnet/{tailnet}/services/svc:{svc}",
-        headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
-        json=payload,
-    )
+    # Tailscale API: create or update service
+    payload = {"name": f"svc:{svc}", "ports": ["tcp:443"]}
+    url = f"https://api.tailscale.com/api/v2/tailnet/{tailnet}/services/svc:{svc}"
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {key}"}
 
-    response2 = requests.post(
-        f"https://api.tailscale.com/api/v2/tailnet/{tailnet}/services/svc:{svc}/device/{device_id}/approved",
-        headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
-        json={"approved": True},
-    )
+    try:
+        resp = requests.put(url, headers=headers, json=payload)
+        resp.raise_for_status()
+        print(f"Tailscale API: created/updated service svc:{svc}")
+    except Exception as e:
+        print(f"API error (PUT): {e}")
+        return
 
-    print(response.status_code)
-    print(response2.status_code)
+    # Approve service for this device
+    approve_url = f"{url}/device/{device_id}/approved"
+    try:
+        resp2 = requests.post(approve_url, headers=headers, json={"approved": True})
+        resp2.raise_for_status()
+        print(f"Tailscale API: approved service for device {device_id}")
+    except Exception as e:
+        print(f"API error (POST approve): {e}")
+        return
 
     cmd = [
         "tailscale",
@@ -50,7 +66,11 @@ def run_tailscale(container, stop=False):
     if stop:
         cmd.append("off")
     print(f"Running: {' '.join(cmd)}", flush=True)
-    subprocess.run(cmd, check=False)
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"tailscale error: {result.stderr}")
+    else:
+        print(f"tailscale success: {result.stdout}")
 
 
 # Handle existing containers
@@ -64,7 +84,7 @@ for container in client.containers.list(filters={"label": "tailscale.name"}):
 event_filters = {
     "type": "container",
     "event": ["start", "stop"],
-    "label": ["tailscale.name"],
+    "label": ["tailscale.name=.*"],
 }
 print(f"Watching for Docker events with filters: {event_filters}", flush=True)
 

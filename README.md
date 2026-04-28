@@ -9,6 +9,17 @@ When a Docker container starts with a `tailscale.name` label, `auto-ts`:
 
 No reverse proxy. No manual certificate management.
 
+## Context
+
+- [Requirements](#requirements)
+- [Setup](#setup)
+- [Autostart (systemd)](#autostart)
+- [Systemd commands](#systemd-commands)
+- [Troubleshooting](#troubleshooting)
+- [Usage](#usage)
+- [Planned Features](#planned-features)
+
+  
 ## Requirements
 
 - Tailscale installed and logged in (`tailscale up`)
@@ -55,7 +66,7 @@ No reverse proxy. No manual certificate management.
 
   Press Ctrl+C to stop the script.
 
-## Setting up auto-ts as a systemd service (autostart)
+## Autostart
 
 To run auto-ts automatically in the background and restart it if it ever fails, you can install it as a systemd service. This is the recommended way to run it on most Linux distributions.
 
@@ -154,7 +165,7 @@ The logs will show that tailscale serve ... off was executed, removing the HTTPS
 
 Once the service is running, auto-ts will watch for Docker containers with the tailscale.name label and automatically proxy HTTPS through Tailscale – no manual intervention required.
 
-7. Managing the service
+7. Systemd commands
 
 | Action | Command |
 |--------|---------|
@@ -193,3 +204,10 @@ Start the container. auto-ts will automatically:
 - Create https://myapp.tailnet-name.ts.net
 - Forward HTTPS to localhost:8080
 Stop the container → service turns off automatically.
+
+## Planned features
+- [ ] Docker image
+- [ ] Install script
+- [ ] Native distro packages
+- [ ] Support for existing homepage labels
+- [ ] Manually add non-docker services

@@ -19,17 +19,17 @@ jobs:
       matrix:
         include:
           - runner: ubuntu-latest
-            arch: amd64
+            python_arch: x64
           - runner: ubuntu-24.04-arm
-            arch: arm64
+            python_arch: arm64
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Create Executables
         uses: sayyid5416/pyinstaller@v1
         with:
           python_ver: '3.12'
-          python_arch: ${{ runner.arch }}
+          python_arch: ${{ matrix.python_arch }}
           spec: 'main.py'
           requirements: 'requirements.txt'
           upload_exe_with_name: 'autoserve-ts'
-          options: --onefile, --name "autoserve-ts-${{ runner.arch }}"
+          options: --onefile, --name "autoserve-ts-${{ matrix.python_arch }}"

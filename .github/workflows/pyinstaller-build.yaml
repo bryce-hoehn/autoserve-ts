@@ -31,5 +31,5 @@ jobs:
           python_arch: ${{ matrix.python_arch }}
           spec: 'main.py'
           requirements: 'requirements.txt'
-          upload_exe_with_name: 'autoserve-ts'
+          upload_exe_with_name: 'autoserve-ts-${{ matrix.python_arch }}'
           options: --onefile, --name "autoserve-ts-${{ matrix.python_arch }}"

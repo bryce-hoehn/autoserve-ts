@@ -1,4 +1,4 @@
-# auto-ts
+# autoserve-ts
 
 **Automatically provision HTTPS certificates for Docker containers on your Tailscale tailnet.**
 

@@ -24,24 +24,12 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.runner }}
     steps:
-      - name: Create amd64 Executable
+      - name: Create Executables
         uses: sayyid5416/pyinstaller@v1
-        if: ${{ matrix.arch == 'amd64'}}
         with:
           python_ver: '3.12'
-          python_arch: 
+          python_arch: ${{ matrix.arch }}
           spec: 'main.py'
           requirements: 'requirements.txt'
           upload_exe_with_name: 'autoserve-ts'
-          options: --onefile, --name "autoserve-ts"
-          
-      - name: Create amd64 Executable
-        uses: sayyid5416/pyinstaller@v1
-        if: ${{ matrix.arch == 'arm64'}}
-        with:
-          python_ver: '3.12'
-          python_arch: 'arm64'
-          spec: 'main.py'
-          requirements: 'requirements.txt'
-          upload_exe_with_name: 'autoserve-ts'
-          options: --onefile, --name "autoserve-ts"
+          options: --onefile, --name "autoserve-ts-${{ matrix.arch }}"
